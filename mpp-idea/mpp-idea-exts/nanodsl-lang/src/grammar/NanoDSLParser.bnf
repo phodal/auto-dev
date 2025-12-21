@@ -1,0 +1,171 @@
+{
+  parserClass="cc.unitmesh.nanodsl.language.parser.NanoDSLParser"
+
+  extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+  psiClassPrefix="NanoDSL"
+  psiImplClassSuffix="Impl"
+  psiPackage="cc.unitmesh.nanodsl.language.psi"
+  psiImplPackage="cc.unitmesh.nanodsl.language.psi.impl"
+
+  elementTypeHolderClass="cc.unitmesh.nanodsl.language.psi.NanoDSLTypes"
+  elementTypeClass="cc.unitmesh.nanodsl.language.psi.NanoDSLElementType"
+  tokenTypeClass="cc.unitmesh.nanodsl.language.lexer.NanoDSLTokenType"
+
+  tokens=[
+    COMMENT              = 'regexp:#[^\r\n]*'
+    NEWLINE              = 'regexp:\n'
+    IDENTIFIER           = 'regexp:[a-zA-Z_][a-zA-Z0-9_]*'
+    NUMBER               = 'regexp:[0-9]+(\.[0-9]+)?'
+    BOOLEAN              = 'regexp:true|false'
+    STRING               = 'regexp:"([^\\"\r\n]|\\[^\r\n])*"'
+    
+    COLON                = ':'
+    COMMA                = ','
+    LPAREN               = '('
+    RPAREN               = ')'
+    LBRACE               = '{'
+    RBRACE               = '}'
+    LBRACKET             = '['
+    RBRACKET             = ']'
+    DOT                  = '.'
+    EQUALS               = '='
+    
+    BIND_READ            = '<<'
+    BIND_WRITE           = ':='
+    PLUS_EQUALS          = '+='
+    MINUS_EQUALS         = '-='
+    TIMES_EQUALS         = '*='
+    DIV_EQUALS           = '/='
+    
+    COMPONENT            = 'component'
+    STATE                = 'state'
+    REQUEST              = 'request'
+    IF                   = 'if'
+    FOR                  = 'for'
+    IN                   = 'in'
+    CONTENT              = 'content'
+    ON_CLICK             = 'on_click'
+    ON_SUCCESS           = 'on_success'
+    ON_ERROR             = 'on_error'
+    ON_CLOSE             = 'on_close'
+    ON_ROW_CLICK         = 'on_row_click'
+    URL                  = 'url'
+    METHOD               = 'method'
+    BODY                 = 'body'
+    HEADERS              = 'headers'
+    TO                   = 'to'
+    PARAMS               = 'params'
+    QUERY                = 'query'
+    REPLACE              = 'replace'
+    
+    VSTACK               = 'VStack'
+    HSTACK               = 'HStack'
+    CARD                 = 'Card'
+    SPLITVIEW            = 'SplitView'
+    GENCANVAS            = 'GenCanvas'
+    FORM                 = 'Form'
+    MODAL                = 'Modal'
+    TEXT                 = 'Text'
+    IMAGE                = 'Image'
+    BADGE                = 'Badge'
+    DIVIDER              = 'Divider'
+    ALERT                = 'Alert'
+    PROGRESS             = 'Progress'
+    SPINNER              = 'Spinner'
+    DATACHART            = 'DataChart'
+    DATATABLE            = 'DataTable'
+    BUTTON               = 'Button'
+    INPUT                = 'Input'
+    TEXTAREA             = 'TextArea'
+    SELECT               = 'Select'
+    CHECKBOX             = 'Checkbox'
+    RADIO                = 'Radio'
+    RADIOGROUP           = 'RadioGroup'
+    SWITCH               = 'Switch'
+    NUMBERINPUT          = 'NumberInput'
+    SMARTTEXTFIELD       = 'SmartTextField'
+    SLIDER               = 'Slider'
+    DATEPICKER           = 'DatePicker'
+    DATERANGEPICKER      = 'DateRangePicker'
+    
+    NAVIGATE             = 'Navigate'
+    FETCH                = 'Fetch'
+    SHOWTOAST            = 'ShowToast'
+    STATEMUTATION        = 'StateMutation'
+    
+    GET                  = 'GET'
+    POST                 = 'POST'
+    PUT                  = 'PUT'
+    PATCH                = 'PATCH'
+    DELETE               = 'DELETE'
+    
+    INT                  = 'int'
+    FLOAT                = 'float'
+    STRING_TYPE          = 'string'
+    BOOL                 = 'bool'
+  ]
+}
+
+NanoDSLFile ::= (componentDecl | NEWLINE | COMMENT)*
+
+componentDecl ::= COMPONENT IDENTIFIER paramList? COLON NEWLINE componentBody
+
+paramList ::= LPAREN param (COMMA param)* RPAREN
+
+param ::= IDENTIFIER COLON typeRef
+
+typeRef ::= INT | FLOAT | STRING_TYPE | BOOL | IDENTIFIER
+
+componentBody ::= (stateBlock | requestBlock | propertyAssignment | contentBlock | componentInstance | ifBlock | forBlock | NEWLINE | COMMENT)*
+
+stateBlock ::= STATE COLON NEWLINE stateEntries
+
+stateEntries ::= (stateEntry | NEWLINE | COMMENT)*
+
+stateEntry ::= IDENTIFIER COLON typeRef (EQUALS expr)? NEWLINE
+
+requestBlock ::= REQUEST IDENTIFIER COLON NEWLINE requestEntries
+
+requestEntries ::= (requestEntry | NEWLINE | COMMENT)*
+
+requestEntry ::= (URL | METHOD | BODY | HEADERS | ON_SUCCESS | ON_ERROR) COLON expr NEWLINE
+
+propertyAssignment ::= IDENTIFIER COLON expr NEWLINE
+
+contentBlock ::= CONTENT COLON NEWLINE componentInstances
+
+componentInstances ::= (componentInstance | NEWLINE | COMMENT)*
+
+componentInstance ::= componentName propList? COLON NEWLINE componentBody
+                    | componentName LPAREN argList? RPAREN COLON? NEWLINE? componentBody?
+                    | componentName LPAREN argList? RPAREN NEWLINE?
+
+componentName ::= VSTACK | HSTACK | CARD | SPLITVIEW | GENCANVAS | FORM | MODAL
+                | TEXT | IMAGE | BADGE | DIVIDER | ALERT | PROGRESS | SPINNER | DATACHART | DATATABLE
+                | BUTTON | INPUT | TEXTAREA | SELECT | CHECKBOX | RADIO | RADIOGROUP | SWITCH
+                | NUMBERINPUT | SMARTTEXTFIELD | SLIDER | DATEPICKER | DATERANGEPICKER
+                | IDENTIFIER
+
+propList ::= LPAREN prop (COMMA prop)* RPAREN
+
+prop ::= IDENTIFIER EQUALS expr
+       | IDENTIFIER BIND_READ expr
+       | IDENTIFIER BIND_WRITE expr
+
+argList ::= arg (COMMA arg)*
+
+arg ::= expr | prop
+
+ifBlock ::= IF expr COLON NEWLINE componentInstances
+
+forBlock ::= FOR IDENTIFIER IN expr COLON NEWLINE componentInstances
+
+expr ::= STRING | NUMBER | BOOLEAN | IDENTIFIER (DOT IDENTIFIER)* | actionCall | binaryExpr
+
+actionCall ::= actionName LPAREN argList? RPAREN
+
+actionName ::= NAVIGATE | FETCH | SHOWTOAST | STATEMUTATION
+
+binaryExpr ::= expr (PLUS_EQUALS | MINUS_EQUALS | TIMES_EQUALS | DIV_EQUALS) expr
+

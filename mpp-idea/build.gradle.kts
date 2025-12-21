@@ -219,6 +219,7 @@ project(":") {
         from(project(":mpp-idea-exts:ext-git").file("src/main/resources"))
         from(project(":mpp-idea-exts:ext-terminal").file("src/main/resources"))
         from(project(":mpp-idea-exts:devins-lang").file("src/main/resources"))
+        from(project(":mpp-idea-exts:nanodsl-lang").file("src/main/resources"))
     }
 
     repositories {
@@ -331,6 +332,7 @@ project(":") {
         implementation(project(":mpp-idea-exts:ext-git"))
         implementation(project(":mpp-idea-exts:ext-terminal"))
         implementation(project(":mpp-idea-exts:devins-lang"))
+        implementation(project(":mpp-idea-exts:nanodsl-lang"))
 
         // Ktor dependencies - required at runtime by ai.koog:prompt-executor-llms-all
         // (AbstractOpenAILLMClient uses ContentNegotiation and JsonSupport for HTTP client)
@@ -883,6 +885,54 @@ project(":mpp-idea-exts:devins-lang") {
             targetRootOutputDir.set(file("src/gen"))
             pathToParser.set("cc/unitmesh/devti/language/parser/DevInParser.java")
             pathToPsiRoot.set("cc/unitmesh/devti/language/psi")
+            purgeOldFiles.set(true)
+        }
+
+        withType<KotlinCompile> {
+            dependsOn(generateLexer, generateParser)
+        }
+    }
+}
+
+project(":mpp-idea-exts:nanodsl-lang") {
+    apply {
+        plugin("org.jetbrains.grammarkit")
+        plugin("org.jetbrains.kotlin.plugin.serialization")
+    }
+
+    dependencies {
+        intellijPlatform {
+            intellijIde(prop("ideaVersion"))
+            intellijPlugins(ideaPlugins)
+
+            testFramework(TestFrameworkType.Plugin.Java)
+        }
+
+        implementation("cc.unitmesh:mpp-core:${prop("mppVersion")}") {
+            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json")
+            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json-jvm")
+            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
+            exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core-jvm")
+            exclude(group = "io.ktor", module = "ktor-serialization-kotlinx-json")
+            exclude(group = "io.ktor", module = "ktor-serialization-kotlinx-json-jvm")
+        }
+        implementation(project(":mpp-idea-core"))
+    }
+
+    tasks {
+        generateLexer {
+            sourceFile.set(file("src/grammar/NanoDSLLexer.flex"))
+            targetOutputDir.set(file("src/gen/cc/unitmesh/nanodsl/language/lexer"))
+            purgeOldFiles.set(true)
+        }
+
+        generateParser {
+            sourceFile.set(file("src/grammar/NanoDSLParser.bnf"))
+            targetRootOutputDir.set(file("src/gen"))
+            pathToParser.set("cc/unitmesh/nanodsl/language/parser/NanoDSLParser.java")
+            pathToPsiRoot.set("cc/unitmesh/nanodsl/language/psi")
             purgeOldFiles.set(true)
         }
 

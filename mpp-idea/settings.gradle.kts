@@ -34,7 +34,8 @@ include(
     "mpp-idea-exts:ext-terminal",
     "mpp-idea-exts:ext-git",
     "mpp-idea-exts:ext-database",
-    "mpp-idea-exts:devins-lang"
+    "mpp-idea-exts:devins-lang",
+    "mpp-idea-exts:nanodsl-lang"
 )
 
 // Include mpp-core from parent project for configuration management

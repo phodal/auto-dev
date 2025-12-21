@@ -1,0 +1,26 @@
+<idea-plugin>
+    <id>cc.unitmesh.nanodsl.language</id>
+    <name>NanoDSL Language Support</name>
+    <vendor>UnitMesh</vendor>
+    <description>Provides syntax highlighting for NanoDSL language files</description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- File Type -->
+        <fileType name="NanoDSLFile" 
+                  implementationClass="cc.unitmesh.nanodsl.language.NanoDSLFileType" 
+                  fieldName="INSTANCE"
+                  language="NanoDSL" 
+                  extensions="nanodsl"/>
+
+        <!-- Parser Definition -->
+        <lang.parserDefinition language="NanoDSL"
+                               implementationClass="cc.unitmesh.nanodsl.language.parser.NanoDSLParserDefinition"/>
+
+        <!-- Syntax Highlighter -->
+        <lang.syntaxHighlighterFactory language="NanoDSL"
+                                       implementationClass="cc.unitmesh.nanodsl.language.highlight.NanoDSLSyntaxHighlighterFactory"/>
+    </extensions>
+</idea-plugin>
+
