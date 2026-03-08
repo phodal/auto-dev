@@ -122,7 +122,8 @@ class PythonArtifactPackager {
         // Try uv first
         if (isCommandAvailable("uv")) {
             onOutput?.invoke("📦 Installing dependencies via uv...\n")
-            val result = executeCommand("uv pip install ${dependencies.joinToString(" ")}", workDir.absolutePath, onOutput)
+            val args = listOf("uv", "pip", "install") + dependencies
+            val result = executeCommandArray(args, workDir.absolutePath, onOutput)
             if (result.exitCode == 0) {
                 onOutput?.invoke("✅ Dependencies installed via uv.\n")
                 return@withContext Strategy.UV
@@ -143,7 +144,9 @@ class PythonArtifactPackager {
 
     private suspend fun isCommandAvailable(cmd: String): Boolean = withContext(Dispatchers.IO) {
         try {
-            val process = ProcessBuilder("which", cmd)
+            val isWindows = System.getProperty("os.name").lowercase().contains("win")
+            val checkCmd = if (isWindows) listOf("where", cmd) else listOf("which", cmd)
+            val process = ProcessBuilder(checkCmd)
                 .redirectErrorStream(true)
                 .start()
             process.waitFor() == 0
@@ -160,6 +163,38 @@ class PythonArtifactPackager {
         try {
             val processBuilder = ProcessBuilder()
                 .command("sh", "-c", command)
+                .directory(File(workingDirectory))
+                .redirectErrorStream(true)
+
+            val process = processBuilder.start()
+            val outputBuilder = StringBuilder()
+
+            coroutineScope {
+                val outputJob = launch(Dispatchers.IO) {
+                    process.inputStream.bufferedReader().use { reader ->
+                        reader.lineSequence().forEach { line ->
+                            outputBuilder.appendLine(line)
+                            onOutput?.invoke("$line\n")
+                        }
+                    }
+                }
+                val exitCode = process.waitFor()
+                outputJob.join()
+                CommandResult(exitCode, outputBuilder.toString(), "")
+            }
+        } catch (e: Exception) {
+            CommandResult(-1, "", "Error: ${e.message}")
+        }
+    }
+
+    private suspend fun executeCommandArray(
+        command: List<String>,
+        workingDirectory: String,
+        onOutput: ((String) -> Unit)? = null
+    ): CommandResult = withContext(Dispatchers.IO) {
+        try {
+            val processBuilder = ProcessBuilder()
+                .command(command)
                 .directory(File(workingDirectory))
                 .redirectErrorStream(true)
 

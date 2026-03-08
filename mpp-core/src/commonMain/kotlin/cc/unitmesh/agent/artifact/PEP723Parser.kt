@@ -37,8 +37,7 @@ object PEP723Parser {
     // ---- Parsing ----
 
     private val PEP723_BLOCK_PATTERN = Regex(
-        """#\s*///\s*script\s*\n(.*?)#\s*///""",
-        RegexOption.DOT_MATCHES_ALL
+        """(?s)#\s*///\s*script\s*\n(.*?)#\s*///"""
     )
 
     private val REQUIRES_PYTHON_PATTERN = Regex(
@@ -46,15 +45,13 @@ object PEP723Parser {
     )
 
     private val DEPENDENCIES_PATTERN = Regex(
-        """dependencies\s*=\s*\[(.*?)\]""",
-        RegexOption.DOT_MATCHES_ALL
+        """(?s)dependencies\s*=\s*\[(.*?)\]"""
     )
 
     private val DEP_ITEM_PATTERN = Regex("""["']([^"']+)["']""")
 
     private val AUTODEV_SECTION_PATTERN = Regex(
-        """\[tool\.autodev-unit\]\s*\n(.*?)(?=#\s*///|\[tool\.|$)""",
-        RegexOption.DOT_MATCHES_ALL
+        """(?s)\[tool\.autodev-unit\]\s*\n(.*?)(?=#\s*///|\[tool\.|$)"""
     )
 
     private val AUTODEV_KV_PATTERN = Regex(
@@ -179,6 +176,6 @@ object PEP723Parser {
      * Strip the PEP 723 metadata block from a Python script, returning only the code body.
      */
     fun stripMetadata(pythonContent: String): String {
-        return PEP723_BLOCK_PATTERN.replace(pythonContent, "").trimStart('\n')
+        return PEP723_BLOCK_PATTERN.replace(pythonContent, "").trimStart('\r', '\n')
     }
 }

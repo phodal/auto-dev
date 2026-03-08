@@ -64,7 +64,7 @@ class PythonArtifactAgent(
         input: PythonArtifactInput,
         onProgress: (String) -> Unit
     ): ToolResult.AgentResult {
-        onProgress("🐍 Generating Python script...")
+        onProgress("[Python] Generating script...")
 
         val responseBuilder = StringBuilder()
 
@@ -94,7 +94,7 @@ class PythonArtifactAgent(
 
             // Validate PEP 723 metadata is present; inject if missing
             val meta = PEP723Parser.parse(scriptContent)
-            val finalScript = if (meta.rawBlock == null && input.dependencies.isNotEmpty()) {
+            val finalScript = if (meta.rawBlock == null) {
                 PEP723Parser.injectMetadata(
                     pythonContent = scriptContent,
                     dependencies = input.dependencies,
@@ -104,7 +104,7 @@ class PythonArtifactAgent(
                 scriptContent
             }
 
-            onProgress("\n✅ Python script generated successfully.")
+            onProgress("\n[OK] Python script generated successfully.")
 
             ToolResult.AgentResult(
                 success = true,
@@ -142,15 +142,13 @@ class PythonArtifactAgent(
     private fun extractPythonCode(response: String): String? {
         // Try autodev-artifact XML tag first
         val artifactPattern = Regex(
-            """<autodev-artifact[^>]*type="application/autodev\.artifacts\.python"[^>]*>(.*?)</autodev-artifact>""",
-            RegexOption.DOT_MATCHES_ALL
+            """(?s)<autodev-artifact[^>]*type="application/autodev\.artifacts\.python"[^>]*>(.*?)</autodev-artifact>"""
         )
         artifactPattern.find(response)?.let { return it.groupValues[1].trim() }
 
         // Try fenced python code block
         val fencedPattern = Regex(
-            """```python\s*\n(.*?)```""",
-            RegexOption.DOT_MATCHES_ALL
+            """(?s)```python\s*\n(.*?)```"""
         )
         fencedPattern.find(response)?.let { return it.groupValues[1].trim() }
 
