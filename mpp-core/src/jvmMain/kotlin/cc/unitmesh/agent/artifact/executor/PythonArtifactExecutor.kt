@@ -1,6 +1,7 @@
 package cc.unitmesh.agent.artifact.executor
 
 import cc.unitmesh.agent.artifact.ArtifactType
+import cc.unitmesh.agent.artifact.PEP723Parser
 import cc.unitmesh.agent.logging.AutoDevLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -121,43 +122,11 @@ class PythonArtifactExecutor : ArtifactExecutor {
     }
 
     /**
-     * Parse PEP 723 inline metadata from Python script
-     * 
-     * PEP 723 format:
-     * ```python
-     * # /// script
-     * # requires-python = ">=3.11"
-     * # dependencies = [
-     * #   "requests>=2.28.0",
-     * #   "pandas>=1.5.0",
-     * # ]
-     * # ///
-     * ```
+     * Parse PEP 723 inline metadata from Python script.
+     * Delegates to the shared [PEP723Parser].
      */
     private fun parsePep723Dependencies(pythonContent: String): List<String> {
-        val dependencies = mutableListOf<String>()
-
-        // Look for PEP 723 metadata block
-        val pep723Pattern = Regex(
-            """#\s*///\s*script\s*\n(.*?)#\s*///""",
-            RegexOption.DOT_MATCHES_ALL
-        )
-
-        val match = pep723Pattern.find(pythonContent) ?: return emptyList()
-        val metadataBlock = match.groupValues[1]
-
-        // Parse dependencies
-        val depsPattern = Regex("""dependencies\s*=\s*\[(.*?)\]""", RegexOption.DOT_MATCHES_ALL)
-        val depsMatch = depsPattern.find(metadataBlock) ?: return emptyList()
-        val depsContent = depsMatch.groupValues[1]
-
-        // Extract individual dependencies
-        val depPattern = Regex("""["']([^"']+)["']""")
-        depPattern.findAll(depsContent).forEach { depMatch ->
-            dependencies.add(depMatch.groupValues[1])
-        }
-
-        return dependencies
+        return PEP723Parser.parseDependencies(pythonContent)
     }
 
     private suspend fun executeCommand(
